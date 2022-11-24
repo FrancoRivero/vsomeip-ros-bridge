@@ -9,11 +9,11 @@ auto main(int argc, char **argv) -> int
 
     rclcpp::executors::MultiThreadedExecutor executor;
 
-    auto gnss_someip_reporter_node = std::make_shared<GnssSomeIpReporter<GnssSomeIpProvider>>();
-    auto gpsd_client_node = std::make_shared<GpsdClient>();
+    //auto gnss_someip_reporter_node = std::make_shared<SomeIpReporter>();
+    auto ROSClientNode = std::make_shared<ROSClient>();
 
-    executor.add_node(gnss_someip_reporter_node);
-    executor.add_node(gpsd_client_node);
+    //executor.add_node(gnss_someip_reporter_node);
+    executor.add_node(ROSClientNode);
 
     executor.spin();
     

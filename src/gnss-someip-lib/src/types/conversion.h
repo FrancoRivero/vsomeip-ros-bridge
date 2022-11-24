@@ -1,4 +1,4 @@
-#pragma once 
+#pragma once
 
 #include <v0/gnss/common.hpp>
 
@@ -10,25 +10,27 @@ using namespace std::chrono;
 using GnssDataMsg = gnss_someip_lib::msg::GnssData;
 using GnssData = v0::gnss::common::GnssData;
 
-namespace Types::Conversion {
+namespace Types::Conversion
+{
 
 /**
- * @brief converts ROS2 MSG to CommonAPI generated data type 
- * 
- * @param gps_data 
- * @return GnssData 
+ * @brief converts ROS2 MSG to CommonAPI generated data type
+ *
+ * @param gps_data
+ * @return GnssData
  */
-GnssData to_capi_type(const GnssDataMsg & gps_data) {
+GnssData to_capi_type(const GnssDataMsg& gps_data)
+{
     GnssData gnss_data;
 
     v0::gnss::common::Position position;
     v0::gnss::common::Time time;
-    v0::gnss::common::Fix fix; 
+    v0::gnss::common::Fix fix;
     v0::gnss::common::Dop dop;
 
     fix.setLatitude(gps_data.position.fix.latitude);
     fix.setLongitude(gps_data.position.fix.longitude);
-    
+
     dop.setHdop(gps_data.position.dop.hdop);
     dop.setVdop(gps_data.position.dop.vdop);
     dop.setPdop(gps_data.position.dop.pdop);
@@ -46,13 +48,14 @@ GnssData to_capi_type(const GnssDataMsg & gps_data) {
 
 /**
  * @brief converts CommonAPI generated data type to ROS2 data type
- * 
- * @param gps_data 
- * @return GnssData 
+ *
+ * @param gps_data
+ * @return GnssData
  */
-GnssDataMsg from_capi_type(const GnssData & gnss_data) {
-    
-    GnssDataMsg gps_data_msg; 
+GnssDataMsg from_capi_type(const GnssData& gnss_data)
+{
+
+    GnssDataMsg gps_data_msg;
 
     auto position = gnss_data.getPosition();
 
@@ -66,5 +69,4 @@ GnssDataMsg from_capi_type(const GnssData & gnss_data) {
     return gps_data_msg;
 }
 
-
-} // namespace TypeConversion
+} // namespace Types::Conversion

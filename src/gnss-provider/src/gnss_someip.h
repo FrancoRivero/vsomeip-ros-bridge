@@ -1,53 +1,53 @@
 #pragma once 
 
 #include <CommonAPI/CommonAPI.hpp>
-
-#include <v0/gnss/GnssServerStubDefault.hpp>
-
 #include <rclcpp/rclcpp.hpp>
+#include <std_msgs/msg/string.hpp>
+
+using ROSString = std_msgs::msg::String;
 
 
-class GnssSomeIpProvider : public v0::gnss::GnssServerStubDefault {
+class SomeIpProvider {
 
 public:
-    GnssSomeIpProvider() = default;
-    ~GnssSomeIpProvider() = default;
+    SomeIpProvider() = default;
+    ~SomeIpProvider() = default;
 
-    void fireDataEvent(const GnssDataMsg & gps_data) {
-        
-        RCLCPP_INFO(rclcpp::get_logger("GNSS_SOMEIP_Provider"), "Sending gnss data over SOME/IP.");
-
-        auto data = Types::Conversion::to_capi_type(gps_data);
-
-        GnssServerStub::fireDataEvent(data);
+    void fireDataEvent(const ROSString & data) {
+        RCLCPP_INFO(rclcpp::get_logger("SOMEIP_Provider"), "Sending gnss data over SOME/IP.");
+        //RCLCPP_INFO(rclcpp::get_logger("SOMEIP_Provider"), data.data);
     }
 
 };
 
 template <typename T>
-class GnssSomeIpReporter : public rclcpp::Node
+class SomeIpReporter : public rclcpp::Node
 {
-    static constexpr auto node_name = "GNSS_SOMEIP_Reporter";
+    static constexpr auto node_name = "SOMEIP_Reporter";
 
     static constexpr auto domain = "local";
-    static constexpr auto instance = "GnssServer";
+    static constexpr auto instance = "SOMEIPServer";
     static constexpr auto timer_duration = 2s;
 
-    static constexpr auto topic = "GPSD";
+    static constexpr auto topic = "SOMEIP";
     static constexpr auto qos = 10;
 
 public:
-    GnssSomeIpReporter()
+    SomeIpReporter()
         : Node(node_name)
         , someip_provider(std::make_shared<T>())
     {
         if(register_someip_service()) {
-            RCLCPP_INFO(this->get_logger(), "SOME/IP GnssServer has been registered");
+            RCLCPP_INFO(this->get_logger(), "SOME/IP has been registered");
 
-            gpsd_data_subscription = this->create_subscription<GnssDataMsg>(topic, qos, std::bind(&GnssSomeIpReporter::on_gpsd_data, this, std::placeholders::_1));
+            data_subscription = this->create_subscription<ROSString>(topic,
+                                                                     qos,
+                                                                     std::bind(&SomeIpReporter::on_data,
+                                                                               this,
+                                                                               std::placeholders::_1));
 
             publish_timer = this->create_wall_timer(timer_duration, [this]() {            
-                RCLCPP_INFO(this->get_logger(), "Timer: Broadcast GNSS data over SOME/IP");
+                RCLCPP_INFO(this->get_logger(), "Timer: Broadcast data over SOME/IP");
         
                 std::lock_guard<std::mutex> guard(mutex);
 
@@ -61,18 +61,18 @@ protected:
     bool register_someip_service() {
         if(!CommonAPI::Runtime::get()->registerService(domain,instance, someip_provider)) {
             //TODO: handle error case correctly
-            RCLCPP_ERROR(this->get_logger(), "Failed to register SOME/IP GnssServer");
+            RCLCPP_ERROR(this->get_logger(), "Failed to register SOME/IP");
             return false;
         }
 
         return true;
     }
 
-    void on_gpsd_data(const GnssDataMsg & msg) 
+    void on_data(const ROSString & msg) 
     {
         std::lock_guard<std::mutex> guard(mutex);
 
-        RCLCPP_INFO(this->get_logger(), "Received GPS raw data from GpsdClient node");
+        RCLCPP_INFO(this->get_logger(), "Received raw data from Client node");
 
         gps_data = msg;
     }
@@ -83,7 +83,7 @@ private:
 
     std::mutex mutex;
 
-    GnssDataMsg gps_data;
+    ROSString gps_data;
 
-    rclcpp::Subscription<GnssDataMsg>::SharedPtr gpsd_data_subscription;
+    rclcpp::Subscription<ROSString>::SharedPtr data_subscription;
 };
